@@ -13,6 +13,7 @@ Please follow the guidelines below to ensure a smooth contribution process.
   - [How to Contribute](#how-to-contribute)
   - [Reporting Issues](#reporting-issues)
   - [Submitting Changes](#submitting-changes)
+    - [Fixing a missing or incorrect DCO sign-off](#fixing-a-missing-or-incorrect-dco-sign-off)
   - [AI-Assisted Contributions](#ai-assisted-contributions)
     - [Scope](#scope)
     - [Attribution with `Assisted-by`](#attribution-with-assisted-by)
@@ -59,6 +60,31 @@ Be sure to include as much detail as possible.
 
 When you're ready to submit your changes, please create a pull request.
 Include a description of your changes and reference any related issues.
+
+### Fixing a missing or incorrect DCO sign-off
+
+Every commit needs a `Signed-off-by:` line whose name and e-mail match the
+commit author (`git config user.name` / `git config user.email`).
+
+To add a missing sign-off to every commit on your PR branch:
+
+```bash
+git fetch origin
+git rebase --signoff origin/main
+git push --force-with-lease
+```
+
+To fix only the latest commit:
+
+```bash
+git commit --amend --no-edit --signoff
+git push --force-with-lease
+```
+
+If the author identity itself is wrong, correct `user.name` / `user.email`
+and add `--reset-author` to the `git commit --amend` command.
+
+Force-pushing rewrites history, so only do it on your own PR branch.
 
 ## AI-Assisted Contributions
 

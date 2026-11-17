@@ -8,7 +8,7 @@ Zoom link for call - <https://zoom-lfx.platform.linuxfoundation.org/meeting/9568
 
 **Holiday / Vacations / Conflicts**
 
-- Leonidas and Martin at conference 9/18
+- Matt on vacation Nov 23-29th
 
 **Parking lot:**
 
@@ -20,8 +20,529 @@ Zoom link for call - <https://zoom-lfx.platform.linuxfoundation.org/meeting/9568
 
 **Presentations**
 
-- Oct 2nd - QEMU (Leonidas) - (in Use case call)
-  - ACTION: (Weber) Invite others from SGL and AeroWG
+- None
+
+## 20261113
+
+**Attendance**
+
+- Matt Weber - The Boeing Company
+- Yassine Cherni - GoMyRobot
+- Martin Halle - Hamburg University of Technology
+- Matthias Schmitz
+- Ivan Perez - KBR @ NASA
+- Shefali Sharma
+- Rob Woolley - Wind River Systems, Inc.
+
+**Discussion topics**
+
+- [Kernel minimization effort]: ELISA HelloInit instructions & PR #257
+  - Martin and Matthias walked through the updated `HelloInit` documentation and
+    QEMU Docker container implementation; verified that line counts match and
+    the containerized workflow is reproducible
+  - Matthias confirmed that Podman works as a drop-in replacement for Docker
+  - Resolved DCO / commit authorship issue on
+    [PR #257 Starting point for kernel minimization effort](https://github.com/elisa-tech/wg-aerospace/pull/257)
+    (supporting [Issue #168](https://github.com/elisa-tech/wg-aerospace/issues/168))
+    and merged it onto `main` via rebase and merge
+
+- Git commit authorship, DCO sign-off, and AI contribution trailers
+  - Discussed DCO requirements: the commit author name/email and `Signed-off-by`
+    trailer must match the contributor's GitHub identity
+  - Martin opened [PR #269](https://github.com/elisa-tech/wg-aerospace/pull/269)
+    to document DCO recovery steps in `Contributing.md` (with follow-up
+    refinement on the author phrasing requested by Rob)
+  - Discussed AI-assisted contribution policies and commit trailers, comparing
+    the Linux Foundation `Assisted-by:` format with the
+    [Yocto Project AI-Assisted Contribution Policy](https://docs.yoctoproject.org/wrynose/contributor-guide/ai-assisted-contribution-policy.html)
+
+- [Kernel minimization effort]: ELISA HelloCFS direct launch as userspace
+  - Walked through `docs/minimal-linux/hello-cfs/Dockerfile.step0-cfs-baseline`
+    demonstrating a prototype that launches cFS statically as the init process
+    without a separate userspace
+  - Addressed static linking and licensing considerations:
+    - Uses a Bootlin `musl` toolchain on x86_64 to avoid static `glibc`/`libm`
+      GPL linking issues (providing a stub `execinfo.h` header) and an Ubuntu
+      cross-toolchain for ARM64
+    - Statically links cFS applications and libraries into `core-cpu1` via
+      `STATIC_APPLIST` and disables the dynamic loader
+      (`OSAL_CONFIG_INCLUDE_DYNAMIC_LOADER`)
+  - Discussed kernel configuration additions needed on top of `tinyconfig` for
+    cFS (POSIX message queues, VFS, staging mount points, and sockets)
+  - Reviewed initial kernel size metrics (~203k SLOC) and the distinction
+    between compiled source metrics and DWARF-linked metrics (using unstripped
+    DWARF debug symbols to identify linked functions before stripping)
+  - Explored ways to further reduce both cFS and kernel footprint:
+    - Disabling unneeded OSAL options in `osal/default_config.cmake` (adjusted
+      via `sample_defs/aarch64-linux_osconfig.cmake`), such as
+      `OSAL_CONFIG_INCLUDE_DNS FALSE`, `OSAL_CONFIG_INCLUDE_DYNAMIC_LOADER`,
+      and bugcheck options
+    - Removing default test applications in `cfe/cmake/mission_defaults.cmake`
+      (`APPEND MISSION_GLOBAL_APPLIST cfe_assert cfe_testcase`)
+    - Using data-driven analysis (`strace` syscall dumps, KCOV, or QEMU
+      instruction tracing) to identify unused kernel features
+  - Yassine, noted `runit` as a minimal option if an init wrapper is needed later for
+    process supervision / automatic restarts
+  - **ACTION:** Ivan - Investigate the cFS/cFE configuration side to identify
+    which cFE and OSAL options can be disabled to further reduce image and
+    kernel requirements
+  - **ACTION:** Explore using QEMU instruction tracing or `strace` to
+    generate a syscall dump for cFS to identify which kernel options can be
+    removed
+
+- SGL SDK -> cFS build instructions & `meta-aerospace`
+  - Discussed transferring the
+    [cFS Yocto SDK build instructions Gist](https://gist.github.com/robwoolley/04ea0872a8ceb6cf7d3fa0ebab180b64#file-gistfile1-txt)
+    into a `docs/` Markdown file referenced from `README.md` in
+    [meta-aerospace](https://github.com/elisa-tech/meta-aerospace)
+  - Added Matthias ([`@mattthias`](https://github.com/mattthias)) to the
+    `meta-aerospace` repository to contribute the documentation PR
+  - Yassine asked whether there are future plans to register
+    `meta-aerospace`/SGL in the
+    [OpenEmbedded Layer Index](https://layers.openembedded.org/layerindex/branch/master/layers/)
+    (potentially targeting the next LTS)
+    - **ACTION:** This is a good question and we should discuss next time
+  - **ACTION:** Matthias - Opening a PR in `meta-aerospace` transferring the
+    SGL/SDK cFS build instructions from the Gist into the repository
+    documentation
+
+**Not discussed / Carryover items**
+
+- [Kernel minimization effort]: Linux docs
+  - **ACTION:** Matt - Working through constructive feedback received on the
+    Linux patches sent to the kernel doc mailing list
+
+- [GitHub PRs](https://github.com/elisa-tech/wg-aerospace/pulls)
+  - **NEW** [#269 Contributing.md: Add DCO fix instructions](https://github.com/elisa-tech/wg-aerospace/pull/269)
+  - **NEW** [#267 Document the automated AArch64/QEMU cabin lights demo](https://github.com/elisa-tech/wg-aerospace/pull/267)
+  - [#237 Update cFS demo to use Ogma 1.15.0](https://github.com/elisa-tech/wg-aerospace/pull/237)
+  - [#231 ARINC 615A Tool Suite](https://github.com/elisa-tech/wg-aerospace/pull/231)
+  - [#177 Mixed crit workshop](https://github.com/elisa-tech/wg-aerospace/pull/177)
+
+- Revisit parking lot items
+  - **ACTION:** Matt - Work on [merging material supporting the Xen Summit talk](https://github.com/elisa-tech/wg-aerospace/pull/177)
+
+---
+
+## 20261106
+
+**Attendance**
+
+- Matt Weber - The Boeing Company
+- Rob Woolley - Wind River Systems, Inc.
+- Ivan Perez - KBR @ NASA
+- Shefali Sharma
+- Martin Halle - Hamburg University of Technology
+- Yassine Cherni - GoMyRobot
+- Leonidas Kosmidis - BSC
+
+**Discussion topics**
+
+- Kernel minimization effort & KCOV documentation
+  - Matt submitted Linux patches for the minimization guide and KCOV
+    documentation to the linux-doc and KCOV mailing lists (addressing
+    clarifications, licensing, and minimization guide)
+    - Discussion/Patches:
+      <https://lore.kernel.org/linux-doc/20261105013823.29741-1-matthew.l.weber@gmail.com/>
+    - PR: <https://github.com/matthew-l-weber/linux/pull/1>
+  - Matt and Ivan updated documentation and Docker files so that the
+    "Hello World" and "Hello Init" examples are fully containerized and
+    reproducible
+  - Matt updated the [Documentation wrt discussion w/ Ivan](https://github.com/elisa-tech/wg-aerospace/blob/develop-kernel-minimization/docs/minimal-linux/HelloInit.md)
+  - Addressed line count measurement discrepancies between builds (one
+    discrepancy was due to using a full defconfig instead of a bottom-up build)
+  - **ACTION:** Matt - Work through constructive feedback received on the
+    Linux patches sent to the kernel doc mailing list
+  - **ACTION:** Ivan - Walk through updated HelloInit documentation and
+    examples to verify line counts match and containerized workflow is
+    reproducible
+
+- cFS integration as init process & Docker build environment
+  - Discussed technical requirements for running cFS as an init process,
+    including a minimal root filesystem containing the `core-cpu1` binary
+    and `cf` directory
+  - Explored static vs dynamic linking to reduce glibc/libm dependencies,
+    and evaluated the MUSL library as a license-compatible alternative
+  - Discussed handling cFS execution / automatic restarts and potential need
+    for an init wrapper to handle mounts before executing cFS
+  - Martin demonstrated a successful run of the sample cFS app in the current
+    environment (with sudo):
+    ```text
+    sudo ./core-cpu1
+    CFE_PSP: Default Reset SubType = 1
+    CFE_PSP: Default CPU ID = 1
+    CFE_PSP: Default Spacecraft ID = 66
+    CFE_PSP: Default CPU Name: cpu1
+    OS_Posix_GetSchedulerParams():208:Policy 1: available, min-max: 1-99
+    OS_Posix_GetSchedulerParams():208:Policy 2: available, min-max: 1-99
+    OS_Posix_TaskAPI_Impl_Init():401:Selected policy 2 for RT tasks, root task = 99
+    CFE_PSP: initializing module 'soft_timebase' with ID 0110ff00
+    CFE_PSP: Instantiated software timebase 'cFS-Master' running at 10000 usec
+    CFE_PSP: initializing module 'timebase_posix_clock' with ID 0110ff01
+    CFE_PSP: Using POSIX monotonic clock as CFE timebase
+    CFE_PSP: initializing module 'eeprom_mmap_file' with ID 0110ff02
+    CFE_PSP: Using MMAP simulated EEPROM implementation
+    CFE_PSP: initializing module 'port_notimpl' with ID 0110ff03
+    CFE_PSP: I/O Port access not implemented
+    CFE_PSP: initializing module 'iodriver' with ID 0110ff04
+    CFE_PSP: initializing module 'linux_sysmon' with ID 0110ff05
+    CFE_PSP: EEPROM Range (2) created: Start Address = F651D4CEE000, Size = 00080000 Status = 0
+    CFE_PSP: initializing module 'endian_api' with ID 0110ff06
+    CFE_PSP: Host CPU Endian=LITTLE
+    CFE_PSP: initializing module 'ram_notimpl' with ID 0110ff07
+    CFE_PSP: Physical RAM access not implemented
+    CFE_PSP: Starting the cFE with a POWER ON reset.
+    CFE_PSP: Clearing out CFE CDS Shared memory segment.
+    CFE_PSP: Clearing out CFE Reset Shared memory segment.
+    CFE_PSP: Clearing out CFE User Reserved Shared memory segment.
+    1980-001-00:13:19.55663 CFE_ES_SetupResetVariables: POWER ON RESET due to Power Cycle (Power Cycle).
+    1980-001-00:13:19.55679 CFE_ES_Main: CFE_ES_Main in EARLY_INIT state
+    Number of addresses returned by backtrace = 1
+    CFE_PSP: CFE_PSP_AttachExceptions called
+    1980-001-00:13:19.55719 CFE_ES_Main: CFE_ES_Main entering CORE_STARTUP state
+    1980-001-00:13:19.55719 CFE_ES_CreateObjects: Starting Object Creation calls.
+    ```
+  - Found option for static app build:
+    ```text
+    #  <cpuname>_STATIC_APPLIST : list of applications to build and statically
+    #       link with the CFE executable.  This is similar to the "APPLIST"
+    #       except the application is built with STATIC linkage, and it is
+    #       included directly when linking the CFE core executable itself.
+    #       No separate application file is generated for these apps.
+    ```
+  - Agreed to use existing ARM toolchain rather than creating full SGL build
+  - Reviewed existing Gist and Docker files as starting point for cFS build
+    sequence:
+    - Baseline Dockerfile:
+      `docs/minimal-linux/hello-cfs/Dockerfile.step0-cfs-baseline`
+    - PR changes reference:
+      <https://github.com/elisa-tech/wg-aerospace/pull/257/changes#diff-bcedf95c727e8451faf9d6a415167f84abdc573545c9192909f4101824d0bf1aR68>
+  - **ACTION:** Matt - Copy CFS build sequence from Gist into the Dockerfile as
+    commented-out steps to provide a starting baseline
+  - **ACTION:** Martin - Continue working on CFS build from Hello CFS Dockerfile
+    baseline, test running CFS as an init process, and report findings/issues
+
+- AI transcription tools discussion
+  - Team discussed inaccuracies in AI speaker identification and noted risks of
+    misattributed meeting statements
+  - Agreed that raw meeting transcripts should not be shared externally
+
+**Not discussed but FYI**
+
+- QEMU instruction introspection for coverage
+  - Carryover ACTION: Rob - Look for the video link on QEMU instruction introspection
+
+- SGL SDK -> cFS build instructions
+
+- [GitHub PRs](https://github.com/elisa-tech/wg-aerospace/pulls)
+  - [#257 Starting point for kernel minimization effort](https://github.com/elisa-tech/wg-aerospace/pull/257)
+  - [#237 Update cFS demo to use Ogma 1.15.0](https://github.com/elisa-tech/wg-aerospace/pull/237)
+  - [#231 ARINC 615A Tool Suite](https://github.com/elisa-tech/wg-aerospace/pull/231)
+  - [#177 Mixed crit workshop](https://github.com/elisa-tech/wg-aerospace/pull/177)
+
+- Revisit parking lot items
+  - ACTION: Matt - Work on [merging material supporting the Xen Summit talk](https://github.com/elisa-tech/wg-aerospace/pull/177)
+
+---
+
+## 20261030
+
+**Attendance**
+
+- Matt Weber - The Boeing Company
+- Yassine Cherni - GoMyRobot
+- Ivan Perez - KBR @ NASA
+- Leonidas Kosmidis - BSC
+- Shefali Sharma
+- Paulpandian Velusamy
+
+**Discussion topics**
+
+- Kernel minimization effort
+  - ACTION: Weber - Need to walk example and check again prior sloc table in helloinit.md, Ivan's live use case walk through in the call had higher values
+  - Continued to walk the HelloInit steps - got through kcov and found a broken assumption as sysfs is off with tiny
+  - [Feedback on Kernel doc update](https://github.com/matthew-l-weber/linux/pull/1)
+  - **ACTION:** Everyone is welcome to start to look at the next step where we take the HelloInit.md process and apply it to cFS
+    - We started to sketch it out here - <https://github.com/elisa-tech/wg-aerospace/pull/257/changes#diff-41fdbdf2764036e2ecb603de8840ec101abe6d24c6f89299eee9b40b345046c3>
+    - And it would take a build sequence like "SGL SDK -> cFS build instructions" we had been working in prior calls as a start
+
+**Not discussed but FYI**
+
+- QEMU instruction introspection for coverage
+  - Carryover ACTION: Rob - Look for the video link on QEMU instruction introspection
+
+- SGL SDK -> cFS build instructions
+
+- [GitHub PRs](https://github.com/elisa-tech/wg-aerospace/pulls)
+  - [#257 Starting point for kernel minimization effort](https://github.com/elisa-tech/wg-aerospace/pull/257)
+  - [#237 Update cFS demo to use Ogma 1.15.0](https://github.com/elisa-tech/wg-aerospace/pull/237)
+  - [#231 ARINC 615A Tool Suite](https://github.com/elisa-tech/wg-aerospace/pull/231)
+  - [#177 Mixed crit workshop](https://github.com/elisa-tech/wg-aerospace/pull/177)
+
+- Revisit parking lot items
+  - ACTION: Matt - Work on [merging material supporting the Xen Summit talk](https://github.com/elisa-tech/wg-aerospace/pull/177)
+
+---
+
+## 20261023
+
+**Attendance**
+
+- Matt Weber - The Boeing Company
+- Yassine Cherni - GoMyRobot
+- Ivan Perez - KBR @ NASA
+- Leonidas Kosmidis - BSC
+- Shefali Sharma
+- Martin Halle - Hamburg University of Technology
+
+**Discussion topics**
+
+- Leonidas presented on ["Faithful Emulation of Space Processors SoCs using Open Source Technologies"](https://onedrive.live.com/?id=%2Fpersonal%2F01b8647ed2301e95%2FDocuments%2FSMC%2DIT%202026%2FKosmidis%5FSpace%5FProcessors%5FQEMU%5FELISA%5FOct%5F2026%2Epdf&listurl=%2Fpersonal%2F01b8647ed2301e95%2FDocuments&ithint=file%2Cpdf&e=taUegA&migratedtospo=true&parent=%2Fpersonal%2F01b8647ed2301e95%2FDocuments%2FSMC%2DIT%202026&redeem=aHR0cHM6Ly8xZHJ2Lm1zL2IvYy8wMWI4NjQ3ZWQyMzAxZTk1L0lRRG1wemF2NkFpdlNvenZoR0FsbnpDcUFjYTlTYmlwaFN0cWx6VTE1VTlTdFZFP2U9dGFVZWdB&ga=1)
+  - [**Recording**](https://zoom.us/rec/share/042njoaTE_1LK4mfYFemextrY_ApO1v0V4axot-oFvYBRExAWa-X5NCPg6QsMwdN.jAftrhvUmBguxCZt)
+
+- Kernel minimization effort
+  - [Feedback on Kernel doc update](https://github.com/matthew-l-weber/linux/pull/1#issuecomment-6336553402)
+  - Ivan did a walk through
+    - Pre-built files for sequence with Dockerfile and then source file
+    - kcov instruction flow is confusing
+    - instructions refer to sloc script that isn't in the ELISA PR as it was moved to Linux PR
+    - TBD Weber to work with Ivan to add example files from call to a comment on the PR
+  - Carryover ACTION: Decide if we look at coverage at the instruction or source code level
+  - Carryover ACTION: TESTING - review [basics of minimizing](https://matthew-l-weber.github.io/linux/admin-guide/kernel-minimization.html)
+  - PR: [Starting point for kernel minimization effort - #257](https://github.com/elisa-tech/wg-aerospace/pull/257)
+
+**Not discussed but FYI**
+
+- QEMU instruction introspection for coverage
+  - Carryover ACTION: Rob - Look for the video link on QEMU instruction introspection
+
+- SGL SDK -> cFS build instructions
+
+- [GitHub PRs](https://github.com/elisa-tech/wg-aerospace/pulls)
+  - [#257 Starting point for kernel minimization effort](https://github.com/elisa-tech/wg-aerospace/pull/257)
+  - [#237 Update cFS demo to use Ogma 1.15.0](https://github.com/elisa-tech/wg-aerospace/pull/237)
+  - [#231 ARINC 615A Tool Suite](https://github.com/elisa-tech/wg-aerospace/pull/231)
+  - [#177 Mixed crit workshop](https://github.com/elisa-tech/wg-aerospace/pull/177)
+
+- Revisit parking lot items
+  - ACTION: Matt - Work on [merging material supporting the Xen Summit talk](https://github.com/elisa-tech/wg-aerospace/pull/177)
+
+---
+
+## 20261016
+
+**Attendance**
+
+- Matt Weber - The Boeing Company
+- Martin Halle - Hamburg University of Technology
+- Rob Woolley - Wind River Systems, Inc.
+- Ivan Perez - KBR @ NASA
+- Shefali Sharma
+- Yassine Cherni - GoMyRobot
+- Leonidas Kosmidis - BSC
+- Wanja Zaeske - DLR
+- Nick Zajerko-McKee - VORAGO Technologies
+- Benjamin Pellieux - Coros Space
+
+**Discussion topics**
+
+- QEMU instruction introspection for coverage
+  - Link to EPAM Xen fault injection [plus all the coverage discussion videos](https://wiki.xenproject.org/wiki/FuSa_SIG/Meetings) (Search for coverage and/or EPAM to find patches plus videos)
+  - ACTION: Rob - Look for the video link on QEMU instruction introspection.
+    - [Instrumenting, Introspection, and Debugging with QEMU](http://events17.linuxfoundation.org/sites/events/files/slides/presentation_9.pdf)
+
+- Kernel minimization effort
+  - ACTION: Need to decide if we look at coverage at the instruction or source code level
+  - ACTION: TESTING!!! Start here to review [basics of minimizing](https://matthew-l-weber.github.io/linux/admin-guide/kernel-minimization.html)
+  - ACTION: Matt to demo basic app using instructions
+
+- Leonidas presented on ["Faithful Emulation of Space Processors SoCs using Open Source Technologies"](https://onedrive.live.com/?id=%2Fpersonal%2F01b8647ed2301e95%2FDocuments%2FSMC%2DIT%202026%2FKosmidis%5FSpace%5FProcessors%5FQEMU%5FELISA%5FOct%5F2026%2Epdf&listurl=%2Fpersonal%2F01b8647ed2301e95%2FDocuments&ithint=file%2Cpdf&e=taUegA&migratedtospo=true&parent=%2Fpersonal%2F01b8647ed2301e95%2FDocuments%2FSMC%2DIT%202026&redeem=aHR0cHM6Ly8xZHJ2Lm1zL2IvYy8wMWI4NjQ3ZWQyMzAxZTk1L0lRRG1wemF2NkFpdlNvenZoR0FsbnpDcUFjYTlTYmlwaFN0cWx6VTE1VTlTdFZFP2U9dGFVZWdB&ga=1)
+
+- FYI from Matt - Haoda Wang <haoda.wang@columbia.edu> contacted me with HPSC and fault tolerant research interest. I've invited him to our weekly calls.
+
+**Not discussed but FYI**
+
+- SGL SDK -> cFS build instructions
+  - Direction: Add the instructions to a `docs/` folder in [meta-aerospace](https://github.com/elisa-tech/meta-aerospace).
+
+- [GitHub PRs](https://github.com/elisa-tech/wg-aerospace/pulls)
+
+- Revisit parking lot items
+  - ACTION: Matt - Work on [merging material supporting the Xen Summit talk](https://github.com/elisa-tech/wg-aerospace/pull/177).
+
+---
+
+## 20261009
+
+**Attendance**
+
+- Matt Weber - The Boeing Company
+- Martin Halle - Hamburg University of Technology
+- Rob Woolley - Wind River Systems, Inc.
+- Ivan Perez - KBR @ NASA
+- Shefali Sharma
+- Yassine Cherni - GoMyRobot
+- Benjamin Pellieux - Coros Space
+
+**Discussion topics**
+
+- QEMU instruction introspection for coverage
+  - Discussed a possible automation approach to distinguish enabled kernel subsystems from those actually observed in execution.
+  - ACTION: Rob - Look for the video link on QEMU instruction introspection.
+  - ACTION: Matt - Get the EPAM Xen information on a similar approach.
+  - Yassine shared [QEMU with cache-aware fault injection support](https://github.com/radshield/qemu-hce).
+
+- SGL SDK -> cFS build instructions
+  - Martin continued the live walkthrough of the [updated instructions](https://gist.github.com/robwoolley/04ea0872a8ceb6cf7d3fa0ebab180b64).
+  - Direction: Add the instructions to a `docs/` folder in [meta-aerospace](https://github.com/elisa-tech/meta-aerospace).
+
+- [Starting point for kernel minimization effort - #257](https://github.com/elisa-tech/wg-aerospace/pull/257)
+  - Shared a [medical-device workload tracing example](https://elisa.tech/blog/2023/05/03/what-happens-when-openaps-commands-run-on-linux/) using the workload documentation added to the kernel docs.
+  - ACTION: Matt - Try Ivan's Dockerfile steps; Ivan reported no output when he tried them.
+  - Goal: Use and improve the existing workload documentation. Keep the working group's example focused on the basics without additional userspace tooling, for example using QEMU/GDB.
+
+**Not discussed but FYI**
+
+- [GitHub PRs](https://github.com/elisa-tech/wg-aerospace/pulls)
+
+- Revisit parking lot items
+  - ACTION: Matt - Work on [merging material supporting the Xen Summit talk](https://github.com/elisa-tech/wg-aerospace/pull/177).
+
+---
+
+## 20261002
+
+**Attendance**
+
+- Matt Weber - The Boeing Company
+- Ivan Perez - KBR @ NASA
+- Martin Halle - Hamburg University of Technology
+- Rob Wooley - Wind River Systems, Inc.
+- Yassine Cherni - GoMyRobot
+- Benjamin Pellieux - Coros Space
+- Leonidas Kosmidis - BSC
+
+**Discussion topics**
+
+- SGL SDK -> cFS build instructions
+  - Matt added findings to - <https://gist.github.com/robwoolley/04ea0872a8ceb6cf7d3fa0ebab180b64?permalink_comment_id=6352526#gistcomment-6352526>
+  - Martin doing a live walk through
+
+**Not discussed but FYI**
+
+- Raphel interested in giving Hypervisor talk
+  - ACTION: Weber asked Min about a seminar and email thread with Martin + Raphel is started
+
+- [Starting point for kernel minimization effort - #257](https://github.com/elisa-tech/wg-aerospace/pull/257)
+  - Weber mentioned in SGL call and shared a link for others to review
+  - ACTION: Weber reaching out to Shefali who contributed to the workflow tracing docs
+
+- [GitHub PRs](https://github.com/elisa-tech/wg-aerospace/pulls)
+
+- Revisit parking lot items
+  - ACTION: Matt - Going to work on [merging material supporting the Xen summit talk](https://github.com/elisa-tech/wg-aerospace/pull/177)
+
+---
+
+## 20260925
+
+**Attendance**
+
+- Matt Weber - The Boeing Company
+- Ivan Perez - KBR @ NASA
+- Martin Halle - Hamburg University of Technology
+- Benjamin Pellieux - Coros Space
+
+**Discussion topics**
+
+- (Weber) [Presented at Xen Summit last week](https://xensummit2026.sched.com/event/2RDrH/arinc-653-on-xen-a-unikraft-safety-architecture) - has slide and video (soon) links
+  - ACTION: Matt - Going to work on [merging material supporting that talk](https://github.com/elisa-tech/wg-aerospace/pull/177)
+
+- [Starting point for kernel minimization effort - #257](https://github.com/elisa-tech/wg-aerospace/pull/257)
+  - Practice to trace userspace and identify kernel dead code? (glues evaluation practice against a minimized config)
+    - Could be a steering file and/or to get to a tool that glues it together?
+  - Another example of code base size for userspace framework [a653lib](https://github.com/airbus/a653lib)
+    - Could cross check size against other open impl to add to the userspace table
+
+- New releases of Copilot <https://github.com/Copilot-Language/copilot/releases/tag/v4.8.1> and Ogma <https://github.com/nasa/ogma/releases/tag/v1.16.0>
+
+- Raphel interested in giving Hypervisor talk
+  - ACTION: Weber to ask Min about a seminar (use Martin's email to open the discussion)
+
+- Ogma simulink diagram -> tree of files/dirs w/ spec
+
+**Next time**
+
+- [GitHub PRs](https://github.com/elisa-tech/wg-aerospace/pulls)
+
+- Revisit parking lot items
+
+---
+
+## 20260918
+
+**Attendance**
+
+- Matt Weber - The Boeing Company
+- Ivan Perez - KBR @ NASA
+- Brian Wood - The Boeing Company
+- Pawel Wodnicki - 32bitmicro
+- Rob Woolley - Wind River System
+- Shefali Sharma
+- Yassine Cherni - GoMyRobot
+- Benjamin Pellieux - Coros Space
+
+**Discussion topics**
+
+- Added videos to register ("Devcontainer", "cFS SGL prebuilt")
+  - <https://github.com/elisa-tech/wg-aerospace/blob/main/docs/register.md#seminars-talks-and-blog-posts>
+
+- SGL SDK -> cFS build instructions
+  - Matt added findings to - <https://gist.github.com/robwoolley/04ea0872a8ceb6cf7d3fa0ebab180b64?permalink_comment_id=6352526#gistcomment-6352526>
+
+- Ogma simulink diagram -> tree of files/dirs w/ spec (figures out component layout based on a set of models)
+  - Next step wiring them together
+  - Need diagram with enough complexity to get mapped to functions
+
+- cFS on Min Linux concept
+  - SLOC, function counts metrics (distro generic)
+    - Kernel APIs
+    - Assuming direct cFS start from setting as bootargs init=<cFS start application> (minimal user space libs)
+  - How do we resume working this topic?
+    - More of a sell from Ivan's perspective to drive interest
+      - Could use counts and cfg that Nix refined for the Kernel
+      - Add a image build for the meta-aerospace cFS using measurement kernel config - iterate from this removing user space
+      - Landing page - doc that talks about current state of minimizing, how to get counts, how to try it and/or get general feedback
+        - [Nix minimizing doc](https://github.com/elisa-tech/wg-aerospace/blob/main/demos/AvioNix-demo/NixBasedKernelConfig.md)
+          - Covers most steps but not completely user friendly
+        - [Minimizing plan](https://github.com/elisa-tech/wg-aerospace/issues/168)
+        - [Linux Kernel minimized config refs](https://github.com/elisa-tech/wg-aerospace/issues/139)
+        - [(draft)Minimal linux kernel plan](https://github.com/elisa-tech/wg-aerospace/pull/179)
+    - Process we use - iteration on change / test / doc of the exercise (distro generic)
+    - Clear userspace application support / integration approaches for understanding if a Kernel is missing a config feature
+    - ACTION: Ivan was going to start an outline and we work parts of the existing material in
+      - <https://github.com/elisa-tech/wg-aerospace/pull/257/changes>
+      - Structured assuming a new user that built Linux for the first time and was tasked to minimize it
+      - Ties the basics together
+      - Separate template to capture a workload like cFS
+    - ACTION: Matt
+      - [Grab basic process example to add to the doc / qemu launch](https://github.com/elisa-tech/wg-aerospace/pull/257/changes#r4049822174)
+      - [See if I can get the sloc counter as well to for metrics part](https://github.com/unikraft/unikraft/pull/1880/changes)
+    - Should note in the basic example the assumptions
+      - Do we adhere to any of the POSIX standards as a requirement?
+      - Do we assume multiuser system or init system
+    - Next time - walk the progression as a new user to Linux
+      - Removing networking stack
+      - Measuring
+      - Review progression so far
+
+**Next time**
+
+- [GitHub PRs](https://github.com/elisa-tech/wg-aerospace/pulls)
+
+- Revisit parking lot items
+
+---
 
 ## 20260911
 
